@@ -211,7 +211,6 @@ function startNewGame() {
     overlay.classList.add('hidden');
     buildGrid();
     updateStatus();
-    attachCellListeners();
 }
 // ── Event listeners ──────────────────────────────────────────────────────────
 function attachCellListeners() {
@@ -271,4 +270,5 @@ resetScoresBtn.addEventListener('click', () => {
 });
 // ── Bootstrap ────────────────────────────────────────────────────────────────
 startNewGame();
+attachCellListeners();
 //# sourceMappingURL=game.js.map

@@ -245,7 +245,6 @@ function startNewGame(): void {
   overlay.classList.add('hidden');
   buildGrid();
   updateStatus();
-  attachCellListeners();
 }
 
 // ── Event listeners ──────────────────────────────────────────────────────────
@@ -307,3 +306,4 @@ resetScoresBtn.addEventListener('click', () => {
 
 // ── Bootstrap ────────────────────────────────────────────────────────────────
 startNewGame();
+attachCellListeners();
