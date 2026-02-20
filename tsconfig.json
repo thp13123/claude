@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "None",
+    "strict": true,
+    "outFile": "game.js",
+    "removeComments": false,
+    "sourceMap": true
+  },
+  "include": ["game.ts"]
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Puissance 4</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Puissance 4</h1>
+
+    <div class="scoreboard">
+      <div class="score-card player1">
+        <div class="score-disc"></div>
+        <span class="player-name">Joueur 1</span>
+        <span class="score" id="score1">0</span>
+      </div>
+      <div class="score-card draw">
+        <span class="player-name">Nuls</span>
+        <span class="score" id="scoreDraw">0</span>
+      </div>
+      <div class="score-card player2">
+        <div class="score-disc"></div>
+        <span class="player-name">Joueur 2</span>
+        <span class="score" id="score2">0</span>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="current-player" id="statusBar">
+        <span id="turnDisc" class="turn-disc player1-disc"></span>
+        <span id="statusText">Tour du Joueur 1</span>
+      </div>
+    </div>
+
+    <div class="board-wrapper">
+      <div class="column-indicators" id="columnIndicators"></div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-restart" id="restartBtn">Nouvelle partie</button>
+      <button class="btn btn-reset-scores" id="resetScoresBtn">Réinitialiser scores</button>
+    </div>
+
+    <div class="overlay hidden" id="overlay">
+      <div class="modal">
+        <div class="modal-disc" id="modalDisc"></div>
+        <h2 id="modalTitle"></h2>
+        <p id="modalSubtitle"></p>
+        <button class="btn btn-restart" id="modalRestartBtn">Rejouer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
