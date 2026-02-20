@@ -98,21 +98,13 @@ function updateCell(row, col, animate = false) {
     const el = getCellEl(row, col);
     el.classList.remove('player1', 'player2', 'hover-p1', 'hover-p2', 'drop');
     const value = board[row][col];
-    if (value === P1) {
-        el.classList.add('player1');
-        if (animate) {
-            el.style.setProperty('--drop-rows', String(row + 1));
-            void el.offsetWidth; // reflow
-            el.classList.add('drop');
-        }
-    }
-    else if (value === P2) {
-        el.classList.add('player2');
-        if (animate) {
-            el.style.setProperty('--drop-rows', String(row + 1));
-            void el.offsetWidth;
-            el.classList.add('drop');
-        }
+    if (value === EMPTY)
+        return;
+    el.classList.add(`player${value}`);
+    if (animate) {
+        el.style.setProperty('--drop-rows', String(row + 1));
+        void el.offsetWidth; // reflow
+        el.classList.add('drop');
     }
 }
 function highlightWinners(cells) {
