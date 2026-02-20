@@ -7,12 +7,13 @@ const P2 = 2;
 
 type Player = 1 | 2;
 type Cell   = 0 | Player;
-type Board  = Cell[][];
+type Row    = [Cell, Cell, Cell, Cell, Cell, Cell, Cell];
+type Board  = [Row, Row, Row, Row, Row, Row];
 
 interface Score { p1: number; p2: number; draw: number; }
 
 // ── Game state ──────────────────────────────────────────────────────────────
-let board: Board        = [];
+let board: Board        = createBoard();
 let currentPlayer: Player = P1;
 let gameOver: boolean   = false;
 let scores: Score       = { p1: 0, p2: 0, draw: 0 };
@@ -35,7 +36,7 @@ const modalRestartBtn = document.getElementById('modalRestartBtn')!  as HTMLButt
 
 // ── Board logic ─────────────────────────────────────────────────────────────
 function createBoard(): Board {
-  return Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY) as Cell[]);
+  return Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY) as Row) as Board;
 }
 
 function isValidCol(col: number): boolean {

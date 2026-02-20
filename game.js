@@ -6,7 +6,7 @@ const EMPTY = 0;
 const P1 = 1;
 const P2 = 2;
 // ── Game state ──────────────────────────────────────────────────────────────
-let board = [];
+let board = createBoard();
 let currentPlayer = P1;
 let gameOver = false;
 let scores = { p1: 0, p2: 0, draw: 0 };
