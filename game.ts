@@ -91,12 +91,16 @@ function isBoardFull(): boolean {
   return board[0].every(cell => cell !== EMPTY);
 }
 
+function isUndoable(): boolean {
+  return !gameOver && moveHistory.length > 0;
+}
+
 function updateUndoBtn(): void {
-  undoBtn.disabled = gameOver || moveHistory.length === 0;
+  undoBtn.disabled = !isUndoable();
 }
 
 function undo(): void {
-  if (gameOver || moveHistory.length === 0) return;
+  if (!isUndoable()) return;
   const { row, col, player } = moveHistory.pop()!;
   board[row][col] = EMPTY;
   updateCell(row, col);

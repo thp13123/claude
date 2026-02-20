@@ -69,11 +69,14 @@ function checkWin(row, col) {
 function isBoardFull() {
     return board[0].every(cell => cell !== EMPTY);
 }
+function isUndoable() {
+    return !gameOver && moveHistory.length > 0;
+}
 function updateUndoBtn() {
-    undoBtn.disabled = gameOver || moveHistory.length === 0;
+    undoBtn.disabled = !isUndoable();
 }
 function undo() {
-    if (gameOver || moveHistory.length === 0)
+    if (!isUndoable())
         return;
     const { row, col, player } = moveHistory.pop();
     board[row][col] = EMPTY;
