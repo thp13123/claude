@@ -251,7 +251,9 @@ h1 {
 .btn:active { transform: translateY(0); }
 
 .btn-restart      { background: var(--blue-light); color: #fff; }
+.btn-undo         { background: var(--surface);    color: var(--text); border: 1px solid rgba(255,255,255,0.15); }
 .btn-reset-scores { background: var(--surface);    color: var(--text); border: 1px solid rgba(255,255,255,0.15); }
+.btn:disabled     { opacity: 0.35; cursor: not-allowed; transform: none !important; box-shadow: none !important; filter: none !important; }
 
 /* ── Modal overlay ── */
 .overlay {

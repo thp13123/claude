@@ -12,13 +12,16 @@ type ColIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 type Row      = [Cell, Cell, Cell, Cell, Cell, Cell, Cell];
 type Board    = [Row, Row, Row, Row, Row, Row];
 
+type Move     = { row: RowIndex; col: ColIndex; player: Player };
+
 interface Score { p1: number; p2: number; draw: number; }
 
 // ── Game state ──────────────────────────────────────────────────────────────
-let board: Board        = createBoard();
+let board: Board          = createBoard();
 let currentPlayer: Player = P1;
-let gameOver: boolean   = false;
-let scores: Score       = { p1: 0, p2: 0, draw: 0 };
+let gameOver: boolean     = false;
+let scores: Score         = { p1: 0, p2: 0, draw: 0 };
+let moveHistory: Move[]       = [];
 
 // ── DOM refs ────────────────────────────────────────────────────────────────
 const boardEl         = document.getElementById('board')!           as HTMLDivElement;
@@ -30,6 +33,7 @@ const score2El        = document.getElementById('score2')!           as HTMLSpan
 const scoreDrawEl     = document.getElementById('scoreDraw')!        as HTMLSpanElement;
 const restartBtn      = document.getElementById('restartBtn')!       as HTMLButtonElement;
 const resetScoresBtn  = document.getElementById('resetScoresBtn')!   as HTMLButtonElement;
+const undoBtn         = document.getElementById('undoBtn')!          as HTMLButtonElement;
 const overlay         = document.getElementById('overlay')!          as HTMLDivElement;
 const modalDisc       = document.getElementById('modalDisc')!        as HTMLDivElement;
 const modalTitle      = document.getElementById('modalTitle')!       as HTMLHeadingElement;
@@ -49,6 +53,7 @@ function dropDisc(col: ColIndex): RowIndex | null {
   for (let row = ROWS - 1; row >= 0; row--) {
     if (board[row][col] === EMPTY) {
       board[row][col] = currentPlayer;
+      moveHistory.push({ row: row as RowIndex, col, player: currentPlayer });
       return row as RowIndex;
     }
   }
@@ -84,6 +89,20 @@ function checkWin(row: RowIndex, col: ColIndex): [RowIndex, ColIndex][] | null {
 
 function isBoardFull(): boolean {
   return board[0].every(cell => cell !== EMPTY);
+}
+
+function updateUndoBtn(): void {
+  undoBtn.disabled = gameOver || moveHistory.length === 0;
+}
+
+function undo(): void {
+  if (gameOver || moveHistory.length === 0) return;
+  const { row, col, player } = moveHistory.pop()!;
+  board[row][col] = EMPTY;
+  updateCell(row, col);
+  currentPlayer = player;
+  updateStatus();
+  updateUndoBtn();
 }
 
 // ── Rendering ───────────────────────────────────────────────────────────────
@@ -216,6 +235,7 @@ function handleColumnClick(col: ColIndex): void {
     updateScoreDisplay();
     highlightWinners(winCells);
     statusText.textContent = `Joueur ${currentPlayer} gagne !`;
+    updateUndoBtn();
     setTimeout(() => showModal(currentPlayer), 700);
     return;
   }
@@ -225,22 +245,26 @@ function handleColumnClick(col: ColIndex): void {
     scores.draw++;
     updateScoreDisplay();
     statusText.textContent = 'Match nul !';
+    updateUndoBtn();
     setTimeout(() => showModal(null), 400);
     return;
   }
 
   currentPlayer = currentPlayer === P1 ? P2 : P1;
   updateStatus();
+  updateUndoBtn();
 }
 
 function startNewGame(): void {
   board         = createBoard();
   currentPlayer = P1;
   gameOver      = false;
+  moveHistory     = [];
 
   overlay.classList.add('hidden');
   buildGrid();
   updateStatus();
+  updateUndoBtn();
 }
 
 // ── Event listeners ──────────────────────────────────────────────────────────
@@ -290,10 +314,14 @@ function handleKeyboard(e: KeyboardEvent): void {
     applyHover(hoveredCol);
   } else if (e.key === 'Enter' || e.key === ' ') {
     handleColumnClick(hoveredCol);
+  } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.preventDefault();
+    undo();
   }
 }
 
 restartBtn.addEventListener('click', startNewGame);
+undoBtn.addEventListener('click', undo);
 modalRestartBtn.addEventListener('click', startNewGame);
 resetScoresBtn.addEventListener('click', () => {
   scores = { p1: 0, p2: 0, draw: 0 };

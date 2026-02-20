@@ -10,6 +10,7 @@ let board = createBoard();
 let currentPlayer = P1;
 let gameOver = false;
 let scores = { p1: 0, p2: 0, draw: 0 };
+let moveHistory = [];
 // ── DOM refs ────────────────────────────────────────────────────────────────
 const boardEl = document.getElementById('board');
 const colIndicatorsEl = document.getElementById('columnIndicators');
@@ -20,6 +21,7 @@ const score2El = document.getElementById('score2');
 const scoreDrawEl = document.getElementById('scoreDraw');
 const restartBtn = document.getElementById('restartBtn');
 const resetScoresBtn = document.getElementById('resetScoresBtn');
+const undoBtn = document.getElementById('undoBtn');
 const overlay = document.getElementById('overlay');
 const modalDisc = document.getElementById('modalDisc');
 const modalTitle = document.getElementById('modalTitle');
@@ -36,6 +38,7 @@ function dropDisc(col) {
     for (let row = ROWS - 1; row >= 0; row--) {
         if (board[row][col] === EMPTY) {
             board[row][col] = currentPlayer;
+            moveHistory.push({ row: row, col, player: currentPlayer });
             return row;
         }
     }
@@ -65,6 +68,19 @@ function checkWin(row, col) {
 }
 function isBoardFull() {
     return board[0].every(cell => cell !== EMPTY);
+}
+function updateUndoBtn() {
+    undoBtn.disabled = gameOver || moveHistory.length === 0;
+}
+function undo() {
+    if (gameOver || moveHistory.length === 0)
+        return;
+    const { row, col, player } = moveHistory.pop();
+    board[row][col] = EMPTY;
+    updateCell(row, col);
+    currentPlayer = player;
+    updateStatus();
+    updateUndoBtn();
 }
 // ── Rendering ───────────────────────────────────────────────────────────────
 function buildGrid() {
@@ -182,6 +198,7 @@ function handleColumnClick(col) {
         updateScoreDisplay();
         highlightWinners(winCells);
         statusText.textContent = `Joueur ${currentPlayer} gagne !`;
+        updateUndoBtn();
         setTimeout(() => showModal(currentPlayer), 700);
         return;
     }
@@ -190,19 +207,23 @@ function handleColumnClick(col) {
         scores.draw++;
         updateScoreDisplay();
         statusText.textContent = 'Match nul !';
+        updateUndoBtn();
         setTimeout(() => showModal(null), 400);
         return;
     }
     currentPlayer = currentPlayer === P1 ? P2 : P1;
     updateStatus();
+    updateUndoBtn();
 }
 function startNewGame() {
     board = createBoard();
     currentPlayer = P1;
     gameOver = false;
+    moveHistory = [];
     overlay.classList.add('hidden');
     buildGrid();
     updateStatus();
+    updateUndoBtn();
 }
 // ── Event listeners ──────────────────────────────────────────────────────────
 function attachCellListeners() {
@@ -253,8 +274,13 @@ function handleKeyboard(e) {
     else if (e.key === 'Enter' || e.key === ' ') {
         handleColumnClick(hoveredCol);
     }
+    else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        undo();
+    }
 }
 restartBtn.addEventListener('click', startNewGame);
+undoBtn.addEventListener('click', undo);
 modalRestartBtn.addEventListener('click', startNewGame);
 resetScoresBtn.addEventListener('click', () => {
     scores = { p1: 0, p2: 0, draw: 0 };
