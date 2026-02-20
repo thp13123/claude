@@ -5,10 +5,12 @@ const EMPTY = 0;
 const P1 = 1;
 const P2 = 2;
 
-type Player = 1 | 2;
-type Cell   = 0 | Player;
-type Row    = [Cell, Cell, Cell, Cell, Cell, Cell, Cell];
-type Board  = [Row, Row, Row, Row, Row, Row];
+type Player   = 1 | 2;
+type Cell     = 0 | Player;
+type RowIndex = 0 | 1 | 2 | 3 | 4 | 5;
+type ColIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+type Row      = [Cell, Cell, Cell, Cell, Cell, Cell, Cell];
+type Board    = [Row, Row, Row, Row, Row, Row];
 
 interface Score { p1: number; p2: number; draw: number; }
 
@@ -39,27 +41,27 @@ function createBoard(): Board {
   return Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY) as Row) as Board;
 }
 
-function isValidCol(col: number): boolean {
+function isValidCol(col: ColIndex): boolean {
   return board[0][col] === EMPTY;
 }
 
-function dropDisc(col: number): number | null {
+function dropDisc(col: ColIndex): RowIndex | null {
   for (let row = ROWS - 1; row >= 0; row--) {
     if (board[row][col] === EMPTY) {
       board[row][col] = currentPlayer;
-      return row;
+      return row as RowIndex;
     }
   }
   return null;
 }
 
-function checkWin(row: number, col: number): [number, number][] | null {
+function checkWin(row: RowIndex, col: ColIndex): [RowIndex, ColIndex][] | null {
   const directions: [number, number][] = [
     [0, 1], [1, 0], [1, 1], [1, -1],
   ];
 
   for (const [dr, dc] of directions) {
-    const cells: [number, number][] = [[row, col]];
+    const cells: [RowIndex, ColIndex][] = [[row, col]];
 
     for (const sign of [-1, 1]) {
       let r = row + dr * sign;
@@ -69,7 +71,7 @@ function checkWin(row: number, col: number): [number, number][] | null {
         c >= 0 && c < COLS &&
         board[r][c] === currentPlayer
       ) {
-        cells.push([r, c]);
+        cells.push([r as RowIndex, c as ColIndex]);
         r += dr * sign;
         c += dc * sign;
       }
@@ -113,11 +115,11 @@ function buildGrid(): void {
   }
 }
 
-function getCellEl(row: number, col: number): HTMLDivElement {
+function getCellEl(row: RowIndex, col: ColIndex): HTMLDivElement {
   return boardEl.querySelector(`[data-row="${row}"][data-col="${col}"]`) as HTMLDivElement;
 }
 
-function updateCell(row: number, col: number, animate = false): void {
+function updateCell(row: RowIndex, col: ColIndex, animate = false): void {
   const el = getCellEl(row, col);
   el.classList.remove('player1', 'player2', 'hover-p1', 'hover-p2', 'drop');
 
@@ -132,7 +134,7 @@ function updateCell(row: number, col: number, animate = false): void {
   }
 }
 
-function highlightWinners(cells: [number, number][]): void {
+function highlightWinners(cells: [RowIndex, ColIndex][]): void {
   for (const [r, c] of cells) {
     getCellEl(r, c).classList.add('winner');
   }
@@ -147,7 +149,7 @@ function clearHover(): void {
   });
 }
 
-function applyHover(col: number): void {
+function applyHover(col: ColIndex): void {
   clearHover();
   if (gameOver) return;
 
@@ -156,7 +158,7 @@ function applyHover(col: number): void {
   // Highlight bottom-most empty cell in column
   for (let row = ROWS - 1; row >= 0; row--) {
     if (board[row][col] === EMPTY) {
-      getCellEl(row, col).classList.add(hoverClass);
+      getCellEl(row as RowIndex, col).classList.add(hoverClass);
       break;
     }
   }
@@ -196,7 +198,7 @@ function showModal(winner: Player | null): void {
 }
 
 // ── Game flow ────────────────────────────────────────────────────────────────
-function handleColumnClick(col: number): void {
+function handleColumnClick(col: ColIndex): void {
   if (gameOver || !isValidCol(col)) return;
 
   const row = dropDisc(col);
@@ -246,14 +248,14 @@ function attachCellListeners(): void {
   boardEl.addEventListener('click', (e) => {
     const target = (e.target as HTMLElement).closest('.cell') as HTMLDivElement | null;
     if (!target) return;
-    const col = Number(target.dataset['col']);
+    const col = Number(target.dataset['col']) as ColIndex;
     handleColumnClick(col);
   });
 
   boardEl.addEventListener('mousemove', (e) => {
     const target = (e.target as HTMLElement).closest('.cell') as HTMLDivElement | null;
     if (!target) { clearHover(); return; }
-    applyHover(Number(target.dataset['col']));
+    applyHover(Number(target.dataset['col']) as ColIndex);
   });
 
   boardEl.addEventListener('mouseleave', clearHover);
@@ -262,29 +264,29 @@ function attachCellListeners(): void {
   colIndicatorsEl.addEventListener('click', (e) => {
     const target = (e.target as HTMLElement).closest('.col-indicator') as HTMLDivElement | null;
     if (!target) return;
-    handleColumnClick(Number(target.dataset['col']));
+    handleColumnClick(Number(target.dataset['col']) as ColIndex);
   });
 
   colIndicatorsEl.addEventListener('mousemove', (e) => {
     const target = (e.target as HTMLElement).closest('.col-indicator') as HTMLDivElement | null;
     if (!target) return;
-    applyHover(Number(target.dataset['col']));
+    applyHover(Number(target.dataset['col']) as ColIndex);
   });
 
   // Keyboard: arrow keys + Enter
   document.addEventListener('keydown', handleKeyboard);
 }
 
-let hoveredCol = 3; // start at centre
+let hoveredCol: ColIndex = 3; // start at centre
 
 function handleKeyboard(e: KeyboardEvent): void {
   if (gameOver) return;
 
   if (e.key === 'ArrowLeft') {
-    hoveredCol = Math.max(0, hoveredCol - 1);
+    hoveredCol = Math.max(0, hoveredCol - 1) as ColIndex;
     applyHover(hoveredCol);
   } else if (e.key === 'ArrowRight') {
-    hoveredCol = Math.min(COLS - 1, hoveredCol + 1);
+    hoveredCol = Math.min(COLS - 1, hoveredCol + 1) as ColIndex;
     applyHover(hoveredCol);
   } else if (e.key === 'Enter' || e.key === ' ') {
     handleColumnClick(hoveredCol);
