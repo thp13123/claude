@@ -74,8 +74,9 @@ h1 {
   width: 20px; height: 20px;
   border-radius: 50%;
 }
-.player1 .score-disc { background: var(--red); box-shadow: 0 0 8px var(--red); }
+.player1 .score-disc { background: var(--red);    box-shadow: 0 0 8px var(--red); }
 .player2 .score-disc { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+.draw-disc { background: linear-gradient(135deg, var(--red) 50%, var(--yellow) 50%); }
 
 .player-name {
   font-size: 0.75rem;
