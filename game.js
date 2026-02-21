@@ -11,6 +11,8 @@ let currentPlayer = P1;
 let gameOver = false;
 let scores = { p1: 0, p2: 0, draw: 0 };
 let moveHistory = [];
+let aiMode = false;
+let aiThinking = false;
 // ── DOM refs ────────────────────────────────────────────────────────────────
 const boardEl = document.querySelector('#board');
 const colIndicatorsEl = document.querySelector('#columnIndicators');
@@ -27,6 +29,9 @@ const modalDisc = document.querySelector('#modalDisc');
 const modalTitle = document.querySelector('#modalTitle');
 const modalSubtitle = document.querySelector('#modalSubtitle');
 const modalRestartBtn = document.querySelector('#modalRestartBtn');
+const modeHHBtn = document.querySelector('#modeHH');
+const modeHMBtn = document.querySelector('#modeHM');
+const player2NameEl = document.querySelector('#player2Name');
 // ── Board logic ─────────────────────────────────────────────────────────────
 function createBoard() {
     return Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
@@ -34,17 +39,20 @@ function createBoard() {
 function isValidCol(col) {
     return board[0][col] === EMPTY;
 }
-function dropDisc(col) {
+function getDropRow(col) {
     for (let row = ROWS - 1; row >= 0; row--) {
-        if (board[row][col] === EMPTY) {
-            board[row][col] = currentPlayer;
-            moveHistory.push({ row: row, col, player: currentPlayer });
-            return row;
-        }
+        if (board[row][col] === EMPTY) return row;
     }
     return null;
 }
-function checkWin(row, col) {
+function dropDisc(col) {
+    const row = getDropRow(col);
+    if (row === null) return null;
+    board[row][col] = currentPlayer;
+    moveHistory.push({ row, col, player: currentPlayer });
+    return row;
+}
+function checkWin(row, col, player = currentPlayer) {
     const directions = [
         [0, 1], [1, 0], [1, 1], [1, -1],
     ];
@@ -55,7 +63,7 @@ function checkWin(row, col) {
             let c = col + dc * sign;
             while (r >= 0 && r < ROWS &&
                 c >= 0 && c < COLS &&
-                board[r][c] === currentPlayer) {
+                board[r][c] === player) {
                 cells.push([r, c]);
                 r += dr * sign;
                 c += dc * sign;
@@ -70,7 +78,7 @@ function isBoardFull() {
     return board[0].every(cell => cell !== EMPTY);
 }
 function isUndoable() {
-    return !gameOver && moveHistory.length > 0;
+    return !gameOver && moveHistory.length > 0 && !aiThinking;
 }
 function updateUndoBtn() {
     undoBtn.disabled = !isUndoable();
@@ -78,12 +86,56 @@ function updateUndoBtn() {
 function undo() {
     if (!isUndoable())
         return;
-    const { row, col, player } = moveHistory.pop();
-    board[row][col] = EMPTY;
-    updateCell(row, col);
-    currentPlayer = player;
+    // In AI mode, undo both moves (AI + human) to give back the human's turn
+    const movesToUndo = (aiMode && moveHistory.length >= 2) ? 2 : 1;
+    for (let i = 0; i < movesToUndo; i++) {
+        if (moveHistory.length === 0) break;
+        const { row, col, player } = moveHistory.pop();
+        board[row][col] = EMPTY;
+        updateCell(row, col);
+        currentPlayer = player;
+    }
     updateStatus();
     updateUndoBtn();
+}
+// ── AI ───────────────────────────────────────────────────────────────────────
+function computeAiCol() {
+    // 1. Win if possible
+    for (let col = 0; col < COLS; col++) {
+        if (!isValidCol(col)) continue;
+        const row = getDropRow(col);
+        board[row][col] = P2;
+        const win = checkWin(row, col, P2);
+        board[row][col] = EMPTY;
+        if (win) return col;
+    }
+    // 2. Block human from winning
+    for (let col = 0; col < COLS; col++) {
+        if (!isValidCol(col)) continue;
+        const row = getDropRow(col);
+        board[row][col] = P1;
+        const win = checkWin(row, col, P1);
+        board[row][col] = EMPTY;
+        if (win) return col;
+    }
+    // 3. Prefer center columns
+    const preferred = [3, 2, 4, 1, 5, 0, 6];
+    for (const col of preferred) {
+        if (isValidCol(col)) return col;
+    }
+}
+function scheduleAiMove() {
+    aiThinking = true;
+    updateUndoBtn();
+    boardEl.style.pointerEvents = 'none';
+    colIndicatorsEl.style.pointerEvents = 'none';
+    setTimeout(() => {
+        aiThinking = false;
+        boardEl.style.pointerEvents = '';
+        colIndicatorsEl.style.pointerEvents = '';
+        const col = computeAiCol();
+        if (col !== undefined) handleColumnClick(col);
+    }, 500);
 }
 // ── Rendering ───────────────────────────────────────────────────────────────
 function buildGrid() {
@@ -141,7 +193,7 @@ function clearHover() {
 }
 function applyHover(col) {
     clearHover();
-    if (gameOver)
+    if (gameOver || aiThinking)
         return;
     const hoverClass = currentPlayer === P1 ? 'hover-p1' : 'hover-p2';
     // Highlight bottom-most empty cell in column
@@ -157,11 +209,18 @@ function applyHover(col) {
     previewDisc.style.background = currentPlayer === P1 ? 'var(--red)' : 'var(--yellow)';
     indicator.classList.add('hovering');
 }
+function updatePlayerLabels() {
+    player2NameEl.textContent = aiMode ? 'Machine' : 'Joueur 2';
+}
 function updateStatus() {
     if (gameOver)
         return;
     turnDisc.className = `turn-disc ${currentPlayer === P1 ? 'player1-disc' : 'player2-disc'}`;
-    statusText.textContent = `Tour du Joueur ${currentPlayer}`;
+    if (aiMode && currentPlayer === P2) {
+        statusText.textContent = 'La Machine réfléchit…';
+    } else {
+        statusText.textContent = `Tour du Joueur ${currentPlayer}`;
+    }
 }
 function updateScoreDisplay() {
     score1El.textContent = String(scores.p1);
@@ -178,13 +237,21 @@ function showModal(winner) {
     }
     else {
         modalDisc.classList.add(`player${winner}`);
-        modalTitle.textContent = `Joueur ${winner} gagne !`;
-        modalSubtitle.textContent = `Félicitations, 4 jetons alignés !`;
+        if (aiMode && winner === P2) {
+            modalTitle.textContent = 'La Machine gagne !';
+            modalSubtitle.textContent = "L'IA a aligné 4 jetons !";
+        } else if (aiMode && winner === P1) {
+            modalTitle.textContent = 'Vous gagnez !';
+            modalSubtitle.textContent = 'Félicitations, 4 jetons alignés !';
+        } else {
+            modalTitle.textContent = `Joueur ${winner} gagne !`;
+            modalSubtitle.textContent = `Félicitations, 4 jetons alignés !`;
+        }
     }
 }
 // ── Game flow ────────────────────────────────────────────────────────────────
 function handleColumnClick(col) {
-    if (gameOver || !isValidCol(col))
+    if (gameOver || !isValidCol(col) || aiThinking)
         return;
     const row = dropDisc(col);
     if (row === null)
@@ -200,7 +267,13 @@ function handleColumnClick(col) {
             scores.p2++;
         updateScoreDisplay();
         highlightWinners(winCells);
-        statusText.textContent = `Joueur ${currentPlayer} gagne !`;
+        if (aiMode && currentPlayer === P2) {
+            statusText.textContent = 'La Machine gagne !';
+        } else if (aiMode && currentPlayer === P1) {
+            statusText.textContent = 'Vous gagnez !';
+        } else {
+            statusText.textContent = `Joueur ${currentPlayer} gagne !`;
+        }
         updateUndoBtn();
         setTimeout(() => showModal(currentPlayer), 700);
         return;
@@ -217,12 +290,18 @@ function handleColumnClick(col) {
     currentPlayer = currentPlayer === P1 ? P2 : P1;
     updateStatus();
     updateUndoBtn();
+    if (aiMode && currentPlayer === P2) {
+        scheduleAiMove();
+    }
 }
 function startNewGame() {
     board = createBoard();
     currentPlayer = P1;
     gameOver = false;
     moveHistory = [];
+    aiThinking = false;
+    boardEl.style.pointerEvents = '';
+    colIndicatorsEl.style.pointerEvents = '';
     overlay.classList.add('hidden');
     buildGrid();
     updateStatus();
@@ -264,7 +343,7 @@ function attachCellListeners() {
 }
 let hoveredCol = 3; // start at centre
 function handleKeyboard(e) {
-    if (gameOver)
+    if (gameOver || aiThinking)
         return;
     if (e.key === 'ArrowLeft') {
         hoveredCol = Math.max(0, hoveredCol - 1);
@@ -282,6 +361,28 @@ function handleKeyboard(e) {
         undo();
     }
 }
+modeHHBtn.addEventListener('click', () => {
+    if (aiMode) {
+        aiMode = false;
+        modeHHBtn.classList.add('active');
+        modeHMBtn.classList.remove('active');
+        updatePlayerLabels();
+        scores = { p1: 0, p2: 0, draw: 0 };
+        updateScoreDisplay();
+        startNewGame();
+    }
+});
+modeHMBtn.addEventListener('click', () => {
+    if (!aiMode) {
+        aiMode = true;
+        modeHMBtn.classList.add('active');
+        modeHHBtn.classList.remove('active');
+        updatePlayerLabels();
+        scores = { p1: 0, p2: 0, draw: 0 };
+        updateScoreDisplay();
+        startNewGame();
+    }
+});
 restartBtn.addEventListener('click', startNewGame);
 undoBtn.addEventListener('click', undo);
 modalRestartBtn.addEventListener('click', startNewGame);
@@ -292,4 +393,3 @@ resetScoresBtn.addEventListener('click', () => {
 // ── Bootstrap ────────────────────────────────────────────────────────────────
 startNewGame();
 attachCellListeners();
-//# sourceMappingURL=game.js.map
