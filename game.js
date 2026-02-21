@@ -12,21 +12,21 @@ let gameOver = false;
 let scores = { p1: 0, p2: 0, draw: 0 };
 let moveHistory = [];
 // ── DOM refs ────────────────────────────────────────────────────────────────
-const boardEl = document.getElementById('board');
-const colIndicatorsEl = document.getElementById('columnIndicators');
-const statusText = document.getElementById('statusText');
-const turnDisc = document.getElementById('turnDisc');
-const score1El = document.getElementById('score1');
-const score2El = document.getElementById('score2');
-const scoreDrawEl = document.getElementById('scoreDraw');
-const restartBtn = document.getElementById('restartBtn');
-const resetScoresBtn = document.getElementById('resetScoresBtn');
-const undoBtn = document.getElementById('undoBtn');
-const overlay = document.getElementById('overlay');
-const modalDisc = document.getElementById('modalDisc');
-const modalTitle = document.getElementById('modalTitle');
-const modalSubtitle = document.getElementById('modalSubtitle');
-const modalRestartBtn = document.getElementById('modalRestartBtn');
+const boardEl = document.querySelector('#board');
+const colIndicatorsEl = document.querySelector('#columnIndicators');
+const statusText = document.querySelector('#statusText');
+const turnDisc = document.querySelector('#turnDisc');
+const score1El = document.querySelector('#score1');
+const score2El = document.querySelector('#score2');
+const scoreDrawEl = document.querySelector('#scoreDraw');
+const restartBtn = document.querySelector('#restartBtn');
+const resetScoresBtn = document.querySelector('#resetScoresBtn');
+const undoBtn = document.querySelector('#undoBtn');
+const overlay = document.querySelector('#overlay');
+const modalDisc = document.querySelector('#modalDisc');
+const modalTitle = document.querySelector('#modalTitle');
+const modalSubtitle = document.querySelector('#modalSubtitle');
+const modalRestartBtn = document.querySelector('#modalRestartBtn');
 // ── Board logic ─────────────────────────────────────────────────────────────
 function createBoard() {
     return Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
@@ -152,7 +152,7 @@ function applyHover(col) {
         }
     }
     // Show column indicator
-    const indicator = colIndicatorsEl.children[col];
+    const indicator = colIndicatorsEl.querySelectorAll('.col-indicator')[col];
     const previewDisc = indicator.querySelector('.preview-disc');
     previewDisc.style.background = currentPlayer === P1 ? 'var(--red)' : 'var(--yellow)';
     indicator.classList.add('hovering');

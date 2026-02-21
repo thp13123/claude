@@ -24,21 +24,21 @@ let scores: Score         = { p1: 0, p2: 0, draw: 0 };
 let moveHistory: Move[]       = [];
 
 // ── DOM refs ────────────────────────────────────────────────────────────────
-const boardEl         = document.getElementById('board')!           as HTMLDivElement;
-const colIndicatorsEl = document.getElementById('columnIndicators')! as HTMLDivElement;
-const statusText      = document.getElementById('statusText')!       as HTMLSpanElement;
-const turnDisc        = document.getElementById('turnDisc')!         as HTMLSpanElement;
-const score1El        = document.getElementById('score1')!           as HTMLSpanElement;
-const score2El        = document.getElementById('score2')!           as HTMLSpanElement;
-const scoreDrawEl     = document.getElementById('scoreDraw')!        as HTMLSpanElement;
-const restartBtn      = document.getElementById('restartBtn')!       as HTMLButtonElement;
-const resetScoresBtn  = document.getElementById('resetScoresBtn')!   as HTMLButtonElement;
-const undoBtn         = document.getElementById('undoBtn')!          as HTMLButtonElement;
-const overlay         = document.getElementById('overlay')!          as HTMLDivElement;
-const modalDisc       = document.getElementById('modalDisc')!        as HTMLDivElement;
-const modalTitle      = document.getElementById('modalTitle')!       as HTMLHeadingElement;
-const modalSubtitle   = document.getElementById('modalSubtitle')!    as HTMLParagraphElement;
-const modalRestartBtn = document.getElementById('modalRestartBtn')!  as HTMLButtonElement;
+const boardEl         = document.querySelector<HTMLDivElement>('#board')!;
+const colIndicatorsEl = document.querySelector<HTMLDivElement>('#columnIndicators')!;
+const statusText      = document.querySelector<HTMLSpanElement>('#statusText')!;
+const turnDisc        = document.querySelector<HTMLSpanElement>('#turnDisc')!;
+const score1El        = document.querySelector<HTMLSpanElement>('#score1')!;
+const score2El        = document.querySelector<HTMLSpanElement>('#score2')!;
+const scoreDrawEl     = document.querySelector<HTMLSpanElement>('#scoreDraw')!;
+const restartBtn      = document.querySelector<HTMLButtonElement>('#restartBtn')!;
+const resetScoresBtn  = document.querySelector<HTMLButtonElement>('#resetScoresBtn')!;
+const undoBtn         = document.querySelector<HTMLButtonElement>('#undoBtn')!;
+const overlay         = document.querySelector<HTMLDivElement>('#overlay')!;
+const modalDisc       = document.querySelector<HTMLDivElement>('#modalDisc')!;
+const modalTitle      = document.querySelector<HTMLHeadingElement>('#modalTitle')!;
+const modalSubtitle   = document.querySelector<HTMLParagraphElement>('#modalSubtitle')!;
+const modalRestartBtn = document.querySelector<HTMLButtonElement>('#modalRestartBtn')!;
 
 // ── Board logic ─────────────────────────────────────────────────────────────
 function createBoard(): Board {
@@ -139,7 +139,7 @@ function buildGrid(): void {
 }
 
 function getCellEl(row: RowIndex, col: ColIndex): HTMLDivElement {
-  return boardEl.querySelector(`[data-row="${row}"][data-col="${col}"]`) as HTMLDivElement;
+  return boardEl.querySelector<HTMLDivElement>(`[data-row="${row}"][data-col="${col}"]`)!;
 }
 
 function updateCell(row: RowIndex, col: ColIndex, animate = false): void {
@@ -187,8 +187,8 @@ function applyHover(col: ColIndex): void {
   }
 
   // Show column indicator
-  const indicator = colIndicatorsEl.children[col] as HTMLDivElement;
-  const previewDisc = indicator.querySelector('.preview-disc') as HTMLDivElement;
+  const indicator  = colIndicatorsEl.querySelectorAll<HTMLDivElement>('.col-indicator')[col];
+  const previewDisc = indicator.querySelector<HTMLDivElement>('.preview-disc')!;
   previewDisc.style.background = currentPlayer === P1 ? 'var(--red)' : 'var(--yellow)';
   indicator.classList.add('hovering');
 }
@@ -274,14 +274,14 @@ function startNewGame(): void {
 // ── Event listeners ──────────────────────────────────────────────────────────
 function attachCellListeners(): void {
   boardEl.addEventListener('click', (e) => {
-    const target = (e.target as HTMLElement).closest('.cell') as HTMLDivElement | null;
+    const target = (e.target as HTMLElement).closest<HTMLDivElement>('.cell');
     if (!target) return;
     const col = Number(target.dataset['col']) as ColIndex;
     handleColumnClick(col);
   });
 
   boardEl.addEventListener('mousemove', (e) => {
-    const target = (e.target as HTMLElement).closest('.cell') as HTMLDivElement | null;
+    const target = (e.target as HTMLElement).closest<HTMLDivElement>('.cell');
     if (!target) { clearHover(); return; }
     applyHover(Number(target.dataset['col']) as ColIndex);
   });
@@ -290,13 +290,13 @@ function attachCellListeners(): void {
 
   // Column indicators also trigger clicks
   colIndicatorsEl.addEventListener('click', (e) => {
-    const target = (e.target as HTMLElement).closest('.col-indicator') as HTMLDivElement | null;
+    const target = (e.target as HTMLElement).closest<HTMLDivElement>('.col-indicator');
     if (!target) return;
     handleColumnClick(Number(target.dataset['col']) as ColIndex);
   });
 
   colIndicatorsEl.addEventListener('mousemove', (e) => {
-    const target = (e.target as HTMLElement).closest('.col-indicator') as HTMLDivElement | null;
+    const target = (e.target as HTMLElement).closest<HTMLDivElement>('.col-indicator');
     if (!target) return;
     applyHover(Number(target.dataset['col']) as ColIndex);
   });
